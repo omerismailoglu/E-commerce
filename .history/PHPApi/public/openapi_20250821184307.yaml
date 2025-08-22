@@ -1,0 +1,136 @@
+openapi: 3.0.3
+info:
+  title: E-Ticaret API
+  version: 1.0.0
+servers:
+  - url: /api
+paths:
+  /register:
+    post:
+      summary: Kullanıcı kaydı
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '201': { description: Oluşturuldu }
+  /login:
+    post:
+      summary: Kullanıcı girişi
+      responses:
+        '200': { description: Başarılı }
+  /profile:
+    get:
+      summary: Profil görüntüleme
+      responses:
+        '200': { description: Başarılı }
+    put:
+      summary: Profil güncelleme
+      responses:
+        '200': { description: Başarılı }
+  /categories:
+    get:
+      summary: Kategori listesi
+      responses:
+        '200': { description: Başarılı }
+    post:
+      summary: Kategori oluştur (Admin)
+      responses:
+        '201': { description: Oluşturuldu }
+  /categories/{id}:
+    put:
+      summary: Kategori güncelle (Admin)
+      responses:
+        '200': { description: Başarılı }
+    delete:
+      summary: Kategori sil (Admin)
+      responses:
+        '200': { description: Başarılı }
+  /products:
+    get:
+      summary: Ürün listesi (filtreleme ve sayfalama)
+      responses:
+        '200': { description: Başarılı }
+    post:
+      summary: Ürün oluştur (Admin)
+      responses:
+        '201': { description: Oluşturuldu }
+  /products/{id}:
+    get:
+      summary: Ürün detayı
+      responses:
+        '200': { description: Başarılı }
+    put:
+      summary: Ürün güncelle (Admin)
+      responses:
+        '200': { description: Başarılı }
+    delete:
+      summary: Ürün sil (Admin)
+      responses:
+        '200': { description: Başarılı }
+  /cart:
+    get:
+      summary: Sepeti görüntüle
+      responses:
+        '200': { description: Başarılı }
+  /cart/add:
+    post:
+      summary: Sepete ürün ekle
+      responses:
+        '201': { description: Oluşturuldu }
+  /cart/update:
+    put:
+      summary: Sepet ürün miktarı güncelle
+      responses:
+        '200': { description: Başarılı }
+  /cart/remove/{product_id}:
+    delete:
+      summary: Sepetten ürün çıkar
+      responses:
+        '200': { description: Başarılı }
+  /cart/clear:
+    delete:
+      summary: Sepeti temizle
+      responses:
+        '200': { description: Başarılı }
+  /orders:
+    post:
+      summary: Sipariş oluştur
+      responses:
+        '201': { description: Oluşturuldu }
+    get:
+      summary: Siparişleri listele
+      responses:
+        '200': { description: Başarılı }
+  /orders/{id}:
+    get:
+      summary: Sipariş detayı
+      responses:
+        '200': { description: Başarılı }
+  /orders/{id}/status:
+    put:
+      summary: Sipariş durumu güncelle (Admin)
+      responses:
+        '200': { description: Başarılı }
+  /admin/dashboard:
+    get:
+      summary: Admin dashboard istatistikleri
+      responses:
+        '200': { description: Başarılı }
+  /admin/users/stats:
+    get:
+      summary: Kullanıcı istatistikleri (Admin)
+      responses:
+        '200': { description: Başarılı }
+  /admin/orders/stats:
+    get:
+      summary: Sipariş istatistikleri (Admin)
+      responses:
+        '200': { description: Başarılı }
+
