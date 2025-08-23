@@ -42,16 +42,12 @@ class CategoryController extends Controller
             ], 401);
         }
 
-        // Debug: Request data'yı logla
-        \Log::info('Category creation request:', $request->all());
-
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
-            \Log::error('Category validation failed:', $validator->errors()->toArray());
             return response()->json([
                 'success' => false,
                 'message' => 'Validation errors',
@@ -59,17 +55,7 @@ class CategoryController extends Controller
             ], 422);
         }
 
-        try {
-            $category = Category::create($request->all());
-            \Log::info('Category created successfully:', $category->toArray());
-        } catch (\Exception $e) {
-            \Log::error('Category creation failed:', ['error' => $e->getMessage()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to create category',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        $category = Category::create($request->all());
 
         return response()->json([
             'success' => true,
@@ -98,25 +84,6 @@ class CategoryController extends Controller
 
     public function update(Request $request, $id)
     {
-        try {
-            $user = JWTAuth::parseToken()->authenticate();
-            if ($user->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized. Admin access required.',
-                    'data' => null,
-                    'errors' => []
-                ], 403);
-            }
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthenticated',
-                'data' => null,
-                'errors' => []
-            ], 401);
-        }
-
         $category = Category::find($id);
 
         if (!$category) {
@@ -150,25 +117,6 @@ class CategoryController extends Controller
 
     public function destroy($id)
     {
-        try {
-            $user = JWTAuth::parseToken()->authenticate();
-            if ($user->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized. Admin access required.',
-                    'data' => null,
-                    'errors' => []
-                ], 403);
-            }
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthenticated',
-                'data' => null,
-                'errors' => []
-            ], 401);
-        }
-
         $category = Category::find($id);
 
         if (!$category) {

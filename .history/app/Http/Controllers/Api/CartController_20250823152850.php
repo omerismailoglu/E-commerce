@@ -184,15 +184,7 @@ class CartController extends Controller
 
     public function removeFromCart($productId)
     {
-        try {
-            $user = JWTAuth::parseToken()->authenticate();
-            if (!$user) {
-                return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
-            }
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Token is invalid'], 401);
-        }
-
+        $user = Auth::user();
         $cart = $user->cart;
 
         if (!$cart) {
@@ -221,15 +213,7 @@ class CartController extends Controller
 
     public function clearCart()
     {
-        try {
-            $user = JWTAuth::parseToken()->authenticate();
-            if (!$user) {
-                return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
-            }
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Token is invalid'], 401);
-        }
-
+        $user = Auth::user();
         $cart = $user->cart;
 
         if (!$cart) {

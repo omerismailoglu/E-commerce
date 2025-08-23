@@ -55,13 +55,3 @@ Route::delete('/cart/clear', [CartController::class, 'clearCart']);
 Route::get('/orders', [OrderController::class, 'index']);
 Route::post('/orders', [OrderController::class, 'store']);
 Route::get('/orders/{id}', [OrderController::class, 'show']);
-Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus']);
-
-// Admin routes
-Route::prefix('admin')->group(function () {
-    Route::get('/dashboard', [AdminController::class, 'dashboard']);
-    Route::get('/orders', [AdminController::class, 'orders']);
-    Route::get('/users', [AdminController::class, 'users']);
-    Route::get('/inventory', [AdminController::class, 'inventory']);
-    Route::put('/products/{id}/stock', [AdminController::class, 'updateStock']);
-});

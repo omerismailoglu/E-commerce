@@ -177,25 +177,6 @@ class ProductController extends Controller
 
     public function update(Request $request, $id)
     {
-        try {
-            $user = JWTAuth::parseToken()->authenticate();
-            if ($user->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized. Admin access required.',
-                    'data' => null,
-                    'errors' => []
-                ], 403);
-            }
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthenticated',
-                'data' => null,
-                'errors' => []
-            ], 401);
-        }
-
         $product = Product::find($id);
 
         if (!$product) {
@@ -232,25 +213,6 @@ class ProductController extends Controller
 
     public function destroy($id)
     {
-        try {
-            $user = JWTAuth::parseToken()->authenticate();
-            if ($user->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized. Admin access required.',
-                    'data' => null,
-                    'errors' => []
-                ], 403);
-            }
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthenticated',
-                'data' => null,
-                'errors' => []
-            ], 401);
-        }
-
         $product = Product::find($id);
 
         if (!$product) {
