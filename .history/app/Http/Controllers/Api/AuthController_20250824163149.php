@@ -124,62 +124,39 @@ class AuthController extends Controller
 
     public function updateProfile(Request $request)
     {
-        try {
-            $user = JWTAuth::parseToken()->authenticate();
-            
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthenticated'
-                ], 401);
-            }
+        $user = Auth::user();
 
-            $validator = Validator::make($request->all(), [
-                'name' => 'sometimes|required|string|min:2|max:255',
-                'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $user->id,
-            ]);
+        $validator = Validator::make($request->all(), [
+            'name' => 'sometimes|required|string|min:2|max:255',
+            'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $user->id,
+        ]);
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation errors',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $user->update($request->only(['name', 'email']));
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Profile updated successfully',
-                'data' => [
-                    'user' => $user
-                ]
-            ]);
-        } catch (\Exception $e) {
+        if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Token is invalid or expired',
-                'error' => $e->getMessage()
-            ], 401);
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 422);
         }
+
+        $user->update($request->only(['name', 'email']));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully',
+            'data' => [
+                'user' => $user
+            ]
+        ]);
     }
 
     public function logout()
     {
-        try {
-            JWTAuth::invalidate(JWTAuth::getToken());
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Successfully logged out'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error during logout',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        Auth::logout();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Successfully logged out'
+        ]);
     }
 }
