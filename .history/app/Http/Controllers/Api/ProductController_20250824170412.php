@@ -9,25 +9,13 @@ use App\Models\Product;
 use App\Models\Category;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
-/**
- * Product Controller
- * 
- * Handles product CRUD operations with advanced filtering and search
- * Admin authentication required for create, update, delete operations
- */
 class ProductController extends Controller
 {
-    /**
-     * Get products with advanced filtering, search, and pagination
-     * 
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function index(Request $request)
     {
         $query = Product::with('category');
 
-        // Apply search filter (name, description, category name)
+        // Advanced search by name and description
         if ($request->has('search')) {
             $searchTerm = $request->search;
             $query->where(function($q) use ($searchTerm) {
@@ -39,18 +27,18 @@ class ProductController extends Controller
             });
         }
 
-        // Apply category filters
+        // Filter by category
         if ($request->has('category_id')) {
             $query->where('category_id', $request->category_id);
         }
 
-        // Apply multiple category filter
+        // Filter by multiple categories
         if ($request->has('category_ids')) {
             $categoryIds = explode(',', $request->category_ids);
             $query->whereIn('category_id', $categoryIds);
         }
 
-        // Apply price range filters
+        // Filter by price range
         if ($request->has('min_price')) {
             $query->where('price', '>=', $request->min_price);
         }
@@ -58,7 +46,7 @@ class ProductController extends Controller
             $query->where('price', '<=', $request->max_price);
         }
 
-        // Apply stock availability filter
+        // Filter by stock availability
         if ($request->has('in_stock')) {
             if ($request->in_stock === 'true') {
                 $query->where('stock_quantity', '>', 0);
@@ -67,7 +55,7 @@ class ProductController extends Controller
             }
         }
 
-        // Apply stock quantity range filters
+        // Filter by stock quantity range
         if ($request->has('min_stock')) {
             $query->where('stock_quantity', '>=', $request->min_stock);
         }
@@ -75,7 +63,7 @@ class ProductController extends Controller
             $query->where('stock_quantity', '<=', $request->max_stock);
         }
 
-        // Apply sorting
+        // Sort options
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
         
@@ -84,11 +72,11 @@ class ProductController extends Controller
             $query->orderBy($sortBy, $sortOrder);
         }
 
-        // Apply pagination
+        // Pagination with metadata
         $perPage = min($request->get('limit', 20), 100); // Max 100 items per page
         $products = $query->paginate($perPage);
 
-        // Build metadata for response
+        // Add additional metadata
         $metadata = [
             'total_products' => $products->total(),
             'current_page' => $products->currentPage(),
@@ -123,21 +111,27 @@ class ProductController extends Controller
         ]);
     }
 
-    /**
-     * Create a new product (Admin only)
-     * 
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function store(Request $request)
     {
-        // Check admin authentication
-        $authResult = $this->checkAdminAuth();
-        if ($authResult) {
-            return $authResult;
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+            if ($user->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized. Admin access required.',
+                    'data' => null,
+                    'errors' => []
+                ], 403);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated',
+                'data' => null,
+                'errors' => []
+            ], 401);
         }
 
-        // Validate product data
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|min:3|max:255',
             'description' => 'required|string',
@@ -154,7 +148,6 @@ class ProductController extends Controller
             ], 422);
         }
 
-        // Create new product
         $product = Product::create($request->all());
 
         return response()->json([
@@ -164,12 +157,6 @@ class ProductController extends Controller
         ], 201);
     }
 
-    /**
-     * Get a specific product by ID
-     * 
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function show($id)
     {
         $product = Product::with('category')->find($id);
@@ -188,98 +175,11 @@ class ProductController extends Controller
         ]);
     }
 
-    /**
-     * Update a product (Admin only)
-     * 
-     * @param Request $request
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function update(Request $request, $id)
-    {
-        // Check admin authentication
-        $authResult = $this->checkAdminAuth();
-        if ($authResult) {
-            return $authResult;
-        }
-
-        // Find product
-        $product = Product::find($id);
-        if (!$product) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Product not found'
-            ], 404);
-        }
-
-        // Validate update data
-        $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|required|string|min:3|max:255',
-            'description' => 'sometimes|required|string',
-            'price' => 'sometimes|required|numeric|min:0',
-            'stock_quantity' => 'sometimes|required|integer|min:0',
-            'category_id' => 'sometimes|required|exists:categories,id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation errors',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        // Update product
-        $product->update($request->all());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Product updated successfully',
-            'data' => $product->load('category')
-        ]);
-    }
-
-    /**
-     * Delete a product (Admin only)
-     * 
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function destroy($id)
-    {
-        // Check admin authentication
-        $authResult = $this->checkAdminAuth();
-        if ($authResult) {
-            return $authResult;
-        }
-
-        // Find and delete product
-        $product = Product::find($id);
-        if (!$product) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Product not found'
-            ], 404);
-        }
-
-        $product->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Product deleted successfully'
-        ]);
-    }
-
-    /**
-     * Check if authenticated user is admin
-     * 
-     * @return \Illuminate\Http\JsonResponse|null
-     */
-    private function checkAdminAuth()
     {
         try {
             $user = JWTAuth::parseToken()->authenticate();
-            if (!$user || $user->role !== 'admin') {
+            if ($user->role !== 'admin') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized. Admin access required.',
@@ -296,6 +196,75 @@ class ProductController extends Controller
             ], 401);
         }
 
-        return null; // Authentication successful
+        $product = Product::find($id);
+
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found'
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'sometimes|required|string|min:3|max:255',
+            'description' => 'sometimes|required|string',
+            'price' => 'sometimes|required|numeric|min:0',
+            'stock_quantity' => 'sometimes|required|integer|min:0',
+            'category_id' => 'sometimes|required|exists:categories,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $product->update($request->all());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product updated successfully',
+            'data' => $product->load('category')
+        ]);
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+            if ($user->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized. Admin access required.',
+                    'data' => null,
+                    'errors' => []
+                ], 403);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated',
+                'data' => null,
+                'errors' => []
+            ], 401);
+        }
+
+        $product = Product::find($id);
+
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found'
+            ], 404);
+        }
+
+        $product->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product deleted successfully'
+        ]);
     }
 }
